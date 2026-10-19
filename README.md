@@ -1,16 +1,6 @@
-React + Vite + Tailwind starter for ISPEE2T1
+# ISPEE2T1
+情報システム演習実験2テーマ1
 
-Getting started
+大矢涼介
 
-1. Install dependencies
-   npm install
-
-2. Run dev server
-   npm run dev
-
-3. Build for production
-   npm run build
-
-Notes
-- This project uses Vite + React 18 and Tailwind CSS.
-- If you prefer yarn or pnpm, use those commands instead (yarn install / yarn dev).
+廣田拓海
