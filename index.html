@@ -3,35 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>チャット管理アプリ</title>
+    <title>Chat File Manager</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="app-shell">
+      <div class="left-rail" aria-label="アプリナビゲーション">
+        <div class="rail-top">
+          <button class="rail-button rail-menu" type="button" aria-label="メニュー">•••</button>
+        </div>
+
+        <div class="rail-middle">
+          <button class="rail-button active" type="button" aria-label="チャット">💬</button>
+          <button class="rail-button" type="button" aria-label="ファイル">📁</button>
+          <button class="rail-button" type="button" aria-label="通知">🔔</button>
+          <button class="rail-button" type="button" aria-label="メンバー">👥</button>
+        </div>
+
+        <div class="rail-bottom">
+          <button class="rail-button" type="button" aria-label="設定">⚙</button>
+        </div>
+      </div>
+
       <aside class="sidebar" aria-label="フォルダ一覧">
-        <div class="sidebar-top">
-          <div class="brand-block" aria-label="チャットアプリタイトル">
-            <button class="menu-button" type="button" aria-label="メニュー">⋯</button>
+        <div class="sidebar-header">
+          <div class="brand-block">
             <span class="brand-name">チャット</span>
           </div>
-          <div class="top-tools">
-            <button class="tool-button add-folder-btn" id="addFolderButton" type="button" aria-label="フォルダを追加">＋</button>
+          <div class="header-tools">
+            <button class="header-button" type="button" aria-label="検索">⌕</button>
+            <button class="header-button add-button" id="addFolderButton" type="button" aria-label="フォルダを追加">＋</button>
           </div>
         </div>
 
-        <nav class="folder-nav" id="folderList" aria-label="フォルダ一覧のナビゲーション"></nav>
-
-        <div class="sidebar-footer">
-          <button class="settings-button" type="button" aria-label="設定">⚙</button>
-          <span>設定</span>
-        </div>
+        <nav class="folder-list" id="folderList" aria-label="フォルダ一覧"></nav>
       </aside>
 
-      <main class="content-pane" aria-live="polite">
+      <main class="content" aria-live="polite">
         <div class="empty-state" aria-hidden="true">
-          <div class="empty-bubble">
+          <div class="empty-icon">
             <span class="bubble bubble-left"></span>
             <span class="bubble bubble-right"></span>
+            <span class="bubble-tail tail-left"></span>
+            <span class="bubble-tail tail-right"></span>
           </div>
           <p>左のファイルからチャットを選択してください</p>
         </div>
@@ -42,7 +56,7 @@
       <div class="modal-panel">
         <h3>フォルダ名の変更</h3>
         <label class="sr-only" for="renameInput">新しいフォルダ名</label>
-        <input id="renameInput" type="text" maxlength="30" placeholder="新しいフォルダ名" />
+        <input id="renameInput" type="text" maxlength="32" placeholder="新しいフォルダ名" />
         <div class="modal-actions">
           <button type="button" id="cancelRename" class="secondary-button">キャンセル</button>
           <button type="button" id="saveRename" class="primary-button">保存</button>
@@ -51,7 +65,7 @@
     </div>
 
     <div class="modal" id="deleteModal" aria-hidden="true">
-      <div class="modal-panel danger-panel">
+      <div class="modal-panel">
         <h3>フォルダを削除</h3>
         <p>本当に <strong id="deleteFolderName">このフォルダ</strong> を削除しますか？</p>
         <div class="modal-actions">
