@@ -5,7 +5,6 @@
 :root {
   --bg-base: #071b2d;
   --bg-inner: #0b1f33;
-  --bg-rail: rgba(7, 14, 24, 0.98);
   --bg-sidebar: rgba(10, 18, 29, 0.82);
   --bg-panel: rgba(8, 18, 28, 0.9);
   --bg-main: rgba(8, 18, 28, 0.8);
@@ -51,55 +50,6 @@ button {
   background:
     radial-gradient(circle at 56% 39%, rgba(16, 34, 47, 0.7), transparent 28%),
     linear-gradient(90deg, #061826 0%, #081a2c 100%);
-}
-
-.left-rail {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  width: 64px;
-  min-width: 64px;
-  padding: 10px 8px 12px;
-  background: rgba(8, 16, 25, 0.96);
-  border-right: 1px solid var(--line);
-}
-
-.rail-top,
-.rail-middle,
-.rail-bottom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.rail-middle {
-  gap: 14px;
-}
-
-.rail-button {
-  width: 26px;
-  height: 26px;
-  border: none;
-  background: transparent;
-  color: var(--icon);
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-  opacity: 0.95;
-  padding: 0;
-}
-
-.rail-button.active {
-  background: rgba(160, 180, 201, 0.12);
-}
-
-.rail-menu {
-  font-size: 20px;
-  letter-spacing: -2px;
 }
 
 .sidebar {
@@ -216,12 +166,12 @@ button {
 .folder-toggle {
   border: none;
   background: transparent;
-  transform: rotate(90deg);
+  transform: rotate(0deg);
   transition: transform 0.15s ease;
 }
 
 .folder-toggle.open {
-  transform: rotate(0deg);
+  transform: rotate(90deg);
 }
 
 .folder-toggle-placeholder {
@@ -478,39 +428,17 @@ button {
     display: block;
   }
 
-  .left-rail {
-    width: 100%;
-    min-width: 0;
-    height: 52px;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .rail-top,
-  .rail-middle,
-  .rail-bottom {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .rail-middle {
-    gap: 10px;
-  }
-
   .sidebar {
     width: 100%;
     min-width: 0;
-    height: calc(100vh - 52px - 38vh);
+    height: calc(100vh - 40vh);
     min-height: 260px;
     border-right: none;
     border-bottom: 1px solid var(--line);
   }
 
   .content {
-    height: 38vh;
+    height: 40vh;
     min-height: 200px;
   }
 }
