@@ -56,6 +56,23 @@
         </div>
     </section>
 </main>
+<section class="folder-manager">
+    <h2>フォルダ管理</h2>
+
+    <div class="folder-form">
+        <label for="folder-name">フォルダ名</label>
+        <input id="folder-name" type="text" placeholder="フォルダ名を入力" />
+
+        <label for="folder-action">操作</label>
+        <select id="folder-action">
+            <option value="add">追加</option>
+            <option value="delete">削除</option>
+        </select>
+
+        <button type="button" onclick="add-folder()">追加</button>
+        <button type="button" onclick="delete-folder()">削除</button>
+    </div>
+</section>
 <section class="utility-bar">
     <div class="search-box">
         <label for="chat-file-search">検索</label>
