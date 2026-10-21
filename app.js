@@ -4,10 +4,10 @@ let folders = [
     name: "○○部",
     count: 4,
     children: [
-      { id: "sample-ooo-talk", name: "# 雑談", count: 12, children: [] },
-      { id: "sample-ooo-event", name: "# 行事", count: 7, children: [] },
-      { id: "sample-ooo-support", name: "# 業務連絡", count: 5, children: [] },
-      { id: "sample-ooo-attendance", name: "# 出欠", count: 3, children: [] }
+      { id: "sample-ooo-talk", name: "雑談", count: 12, children: [] },
+      { id: "sample-ooo-event", name: "行事", count: 7, children: [] },
+      { id: "sample-ooo-support", name: "業務連絡", count: 5, children: [] },
+      { id: "sample-ooo-attendance", name: "出欠", count: 3, children: [] }
     ]
   },
   {
@@ -15,9 +15,9 @@ let folders = [
     name: "サークル",
     count: 3,
     children: [
-      { id: "sample-circle-fitness", name: "# 体育会", count: 6, children: [] },
-      { id: "sample-circle-culture", name: "# 文化系", count: 2, children: [] },
-      { id: "sample-circle-other", name: "# その他", count: 1, children: [] }
+      { id: "sample-circle-fitness", name: "体育会", count: 6, children: [] },
+      { id: "sample-circle-culture", name: "文化系", count: 2, children: [] },
+      { id: "sample-circle-other", name: "その他", count: 1, children: [] }
     ]
   },
   {
@@ -25,11 +25,11 @@ let folders = [
     name: "学科関係",
     count: 5,
     children: [
-      { id: "sample-academic-lecture", name: "# 講義連絡", count: 4, children: [] },
+      { id: "sample-academic-lecture", name: "講義連絡", count: 4, children: [] },
       { id: "sample-academic-zemi", name: "ゼミ", count: 3, children: [] },
       { id: "sample-academic-lab", name: "研究室", count: 2, children: [] },
-      { id: "sample-academic-discussion", name: "# 学科の雑談", count: 8, children: [] },
-      { id: "sample-academic-other", name: "# その他", count: 1, children: [] }
+      { id: "sample-academic-discussion", name: "学科の雑談", count: 8, children: [] },
+      { id: "sample-academic-other", name: "その他", count: 1, children: [] }
     ]
   },
   {
