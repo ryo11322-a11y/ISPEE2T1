@@ -8,30 +8,30 @@ const folders = [
     id: "sample-ooo",
     name: "○○部",
     children: [
-      { id: "sample-ooo-talk", name: "# 雑談", unread: 12, children: [] },
-      { id: "sample-ooo-event", name: "# 行事", unread: 7, children: [] },
-      { id: "sample-ooo-work", name: "# 業務連絡", unread: 5, children: [] },
-      { id: "sample-ooo-attendance", name: "# 出欠", unread: 3, children: [] }
+      { id: "sample-ooo-talk", name: "雑談", unread: 12, children: [] },
+      { id: "sample-ooo-event", name: "行事", unread: 7, children: [] },
+      { id: "sample-ooo-work", name: "業務連絡", unread: 5, children: [] },
+      { id: "sample-ooo-attendance", name: "出欠", unread: 3, children: [] }
     ]
   },
   {
     id: "sample-circle",
     name: "サークル",
     children: [
-      { id: "sample-circle-fitness", name: "# 体育会", unread: 6, children: [] },
-      { id: "sample-circle-culture", name: "# 文化系", unread: 2, children: [] },
-      { id: "sample-circle-other", name: "# その他", unread: 1, children: [] }
+      { id: "sample-circle-fitness", name: "体育会", unread: 6, children: [] },
+      { id: "sample-circle-culture", name: "文化系", unread: 2, children: [] },
+      { id: "sample-circle-other", name: "その他", unread: 1, children: [] }
     ]
   },
   {
     id: "sample-edu",
     name: "学科関係",
     children: [
-      { id: "sample-edu-lecture", name: "# 講義連絡", unread: 4, children: [] },
+      { id: "sample-edu-lecture", name: "講義連絡", unread: 4, children: [] },
       { id: "sample-edu-seminar", name: "ゼミ", unread: 3, children: [] },
       { id: "sample-edu-lab", name: "研究室", unread: 2, children: [] },
-      { id: "sample-edu-chat", name: "# 学科の雑談", unread: 8, children: [] },
-      { id: "sample-edu-other", name: "# その他", unread: 1, children: [] }
+      { id: "sample-edu-chat", name: "学科の雑談", unread: 8, children: [] },
+      { id: "sample-edu-other", name: "その他", unread: 1, children: [] }
     ]
   },
   {
