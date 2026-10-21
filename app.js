@@ -1,38 +1,37 @@
 const randomUnreadCount = () => {
-  const shouldHaveNotification = Math.random() < 0.55;
-  if (!shouldHaveNotification) return 0;
-  return Math.floor(Math.random() * 8) + 1;
+  const shouldHaveNotification = Math.random() < 0.6;
+  return shouldHaveNotification ? Math.floor(Math.random() * 9) + 1 : 0;
 };
 
-let folders = [
+const folders = [
   {
     id: "sample-ooo",
     name: "○○部",
     children: [
-      { id: "sample-ooo-talk", name: "# 雑談", unread: randomUnreadCount(), children: [] },
-      { id: "sample-ooo-event", name: "# 行事", unread: randomUnreadCount(), children: [] },
-      { id: "sample-ooo-support", name: "# 業務連絡", unread: randomUnreadCount(), children: [] },
-      { id: "sample-ooo-attendance", name: "# 出欠", unread: randomUnreadCount(), children: [] }
+      { id: "sample-ooo-talk", name: "# 雑談", unread: 12, children: [] },
+      { id: "sample-ooo-event", name: "# 行事", unread: 7, children: [] },
+      { id: "sample-ooo-work", name: "# 業務連絡", unread: 5, children: [] },
+      { id: "sample-ooo-attendance", name: "# 出欠", unread: 3, children: [] }
     ]
   },
   {
     id: "sample-circle",
     name: "サークル",
     children: [
-      { id: "sample-circle-fitness", name: "# 体育会", unread: randomUnreadCount(), children: [] },
-      { id: "sample-circle-culture", name: "# 文化系", unread: randomUnreadCount(), children: [] },
-      { id: "sample-circle-other", name: "# その他", unread: randomUnreadCount(), children: [] }
+      { id: "sample-circle-fitness", name: "# 体育会", unread: 6, children: [] },
+      { id: "sample-circle-culture", name: "# 文化系", unread: 2, children: [] },
+      { id: "sample-circle-other", name: "# その他", unread: 1, children: [] }
     ]
   },
   {
-    id: "sample-academic",
+    id: "sample-edu",
     name: "学科関係",
     children: [
-      { id: "sample-academic-lecture", name: "# 講義連絡", unread: randomUnreadCount(), children: [] },
-      { id: "sample-academic-zemi", name: "ゼミ", unread: randomUnreadCount(), children: [] },
-      { id: "sample-academic-lab", name: "研究室", unread: randomUnreadCount(), children: [] },
-      { id: "sample-academic-discussion", name: "# 学科の雑談", unread: randomUnreadCount(), children: [] },
-      { id: "sample-academic-other", name: "# その他", unread: randomUnreadCount(), children: [] }
+      { id: "sample-edu-lecture", name: "# 講義連絡", unread: 4, children: [] },
+      { id: "sample-edu-seminar", name: "ゼミ", unread: 3, children: [] },
+      { id: "sample-edu-lab", name: "研究室", unread: 2, children: [] },
+      { id: "sample-edu-chat", name: "# 学科の雑談", unread: 8, children: [] },
+      { id: "sample-edu-other", name: "# その他", unread: 1, children: [] }
     ]
   },
   {
@@ -46,15 +45,21 @@ let folders = [
 let selectedFolderId = null;
 let renamingFolderId = null;
 let deleteTargetId = null;
-const expandedFolderIds = new Set(["sample-ooo", "sample-circle", "sample-academic"]);
+const expandedFolderIds = new Set(["sample-ooo", "sample-circle", "sample-edu"]);
 
-function getFolderCount(item) {
+function normalizeName(name) {
+  const trimmed = (name || "").trim();
+  return trimmed === "" || trimmed.toLowerCase() === "untitled" ? "Untitled" : trimmed;
+}
+
+function getUnreadTotal(item) {
   if (!item) return 0;
-  if (!item.children || !item.children.length) {
+
+  if (!item.children || item.children.length === 0) {
     return Number(item.unread || 0);
   }
 
-  return item.children.reduce((sum, child) => sum + getFolderCount(child), 0);
+  return item.children.reduce((sum, child) => sum + getUnreadTotal(child), 0);
 }
 
 function findFolderById(folderId, items = folders) {
@@ -93,16 +98,17 @@ function openRenameModal(folderId) {
 
   const input = document.getElementById("renameInput");
   const modal = document.getElementById("renameModal");
+  if (!input || !modal) return;
 
   input.value = folder.name || "";
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
-
   setTimeout(() => input.focus(), 50);
 }
 
 function closeRenameModal() {
   const modal = document.getElementById("renameModal");
+  if (!modal) return;
   modal.classList.remove("show");
   modal.setAttribute("aria-hidden", "true");
 }
@@ -114,8 +120,7 @@ function saveFolderName() {
   if (!folder) return;
 
   const input = document.getElementById("renameInput");
-  const rawValue = input.value.trim();
-  folder.name = rawValue || "Untitled";
+  folder.name = normalizeName(input?.value || "");
 
   renamingFolderId = null;
   closeRenameModal();
@@ -136,14 +141,16 @@ function openDeleteModal(folderId) {
 
   const modal = document.getElementById("deleteModal");
   const label = document.getElementById("deleteFolderName");
+  if (!modal || !label) return;
 
-  label.textContent = folder.name || "Untitled";
+  label.textContent = normalizeName(folder.name || "Untitled");
   modal.classList.add("show");
   modal.setAttribute("aria-hidden", "false");
 }
 
 function closeDeleteModal() {
   const modal = document.getElementById("deleteModal");
+  if (!modal) return;
   modal.classList.remove("show");
   modal.setAttribute("aria-hidden", "true");
 }
@@ -199,13 +206,15 @@ function renderFolderList() {
   const folderList = document.getElementById("folderList");
   if (!folderList) return;
 
-  const drawFolderTree = (items, depth = 0) => {
+  const drawTree = (items) => {
     const fragment = document.createDocumentFragment();
 
     items.forEach((item) => {
+      const hasChildren = !!(item.children && item.children.length);
+      const unreadTotal = getUnreadTotal(item);
+
       const wrapper = document.createElement("div");
       wrapper.className = "folder-node";
-      wrapper.style.setProperty("--depth", depth);
 
       const row = document.createElement("div");
       row.className = "folder-row" + (selectedFolderId === item.id ? " active" : "");
@@ -214,29 +223,24 @@ function renderFolderList() {
       const toggleWrap = document.createElement("span");
       toggleWrap.className = "folder-toggle-wrap";
 
-      const hasChildren = !!(item.children && item.children.length);
-
       if (hasChildren) {
-        const toggleButton = document.createElement("button");
-        toggleButton.type = "button";
-        toggleButton.className = "folder-toggle" + (expandedFolderIds.has(item.id) ? " open" : "");
-        toggleButton.setAttribute("aria-label", `${item.name} の展開状態を切り替え`);
-        toggleButton.textContent = "›";
-        toggleButton.addEventListener("click", (event) => {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "folder-toggle" + (expandedFolderIds.has(item.id) ? " open" : "");
+        toggle.textContent = "›";
+        toggle.setAttribute("aria-label", `${item.name} の展開状態を切り替え`);
+        toggle.addEventListener("click", (event) => {
           event.stopPropagation();
-          if (expandedFolderIds.has(item.id)) {
-            expandedFolderIds.delete(item.id);
-          } else {
-            expandedFolderIds.add(item.id);
-          }
+          if (expandedFolderIds.has(item.id)) expandedFolderIds.delete(item.id);
+          else expandedFolderIds.add(item.id);
           renderFolderList();
         });
-        toggleWrap.appendChild(toggleButton);
+        toggleWrap.appendChild(toggle);
       } else {
-        const stub = document.createElement("span");
-        stub.className = "folder-toggle-placeholder";
-        stub.setAttribute("aria-hidden", "true");
-        toggleWrap.appendChild(stub);
+        const placeholder = document.createElement("span");
+        placeholder.className = "folder-toggle-placeholder";
+        placeholder.textContent = "";
+        toggleWrap.appendChild(placeholder);
       }
 
       const nameWrap = document.createElement("div");
@@ -244,47 +248,42 @@ function renderFolderList() {
 
       const icon = document.createElement("span");
       icon.className = "folder-icon";
-      icon.textContent = hasChildren ? "📁" : "💬";
+      icon.textContent = hasChildren ? "📁" : "#";
 
       const label = document.createElement("span");
       label.className = "folder-label";
-      label.textContent = item.name;
+      label.textContent = normalizeName(item.name || "Untitled");
 
       nameWrap.append(icon, label);
 
-      const countValue = getFolderCount(item);
       const count = document.createElement("span");
-      count.className = "folder-count";
-      if (countValue > 0) {
-        count.textContent = String(countValue);
-      } else {
-        count.classList.add("empty");
-      }
+      count.className = "folder-count" + (unreadTotal > 0 ? "" : " empty");
+      count.textContent = unreadTotal > 0 ? String(unreadTotal) : "";
 
       const actions = document.createElement("div");
       actions.className = "folder-actions";
 
-      const renameButton = document.createElement("button");
-      renameButton.type = "button";
-      renameButton.className = "mini-action rename-action";
-      renameButton.setAttribute("aria-label", `${item.name} を名前変更`);
-      renameButton.textContent = "✎";
-      renameButton.addEventListener("click", (event) => {
+      const renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.className = "mini-action";
+      renameBtn.textContent = "✎";
+      renameBtn.setAttribute("aria-label", `${item.name} を名前変更`);
+      renameBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         openRenameModal(item.id);
       });
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "mini-action delete-action";
-      deleteButton.setAttribute("aria-label", `${item.name} を削除`);
-      deleteButton.textContent = "🗑";
-      deleteButton.addEventListener("click", (event) => {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "mini-action";
+      deleteBtn.textContent = "🗑";
+      deleteBtn.setAttribute("aria-label", `${item.name} を削除`);
+      deleteBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         openDeleteModal(item.id);
       });
 
-      actions.append(renameButton, deleteButton);
+      actions.append(renameBtn, deleteBtn);
 
       row.append(toggleWrap, nameWrap, count, actions);
       row.addEventListener("click", (event) => {
@@ -296,16 +295,17 @@ function renderFolderList() {
           return;
         }
 
+        selectedFolderId = item.id;
         markChatAsRead(item.id);
       });
 
       wrapper.appendChild(row);
 
       if (hasChildren && expandedFolderIds.has(item.id)) {
-        const childContainer = document.createElement("div");
-        childContainer.className = "folder-children";
-        childContainer.appendChild(drawFolderTree(item.children, depth + 1));
-        wrapper.appendChild(childContainer);
+        const childrenContainer = document.createElement("div");
+        childrenContainer.className = "folder-children";
+        childrenContainer.appendChild(drawTree(item.children));
+        wrapper.appendChild(childrenContainer);
       }
 
       fragment.appendChild(wrapper);
@@ -315,21 +315,18 @@ function renderFolderList() {
   };
 
   folderList.innerHTML = "";
-  folderList.appendChild(drawFolderTree(folders));
+  folderList.appendChild(drawTree(folders));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const addFolderButton = document.getElementById("addFolderButton");
-  if (addFolderButton) {
-    addFolderButton.addEventListener("click", addFolder);
-  }
+  const addButton = document.getElementById("addFolderButton");
+  if (addButton) addButton.addEventListener("click", addFolder);
 
-  document.getElementById("saveRename").addEventListener("click", saveFolderName);
-  document.getElementById("cancelRename").addEventListener("click", cancelRename);
-  document.getElementById("confirmDelete").addEventListener("click", confirmDelete);
-  document.getElementById("cancelDelete").addEventListener("click", cancelDelete);
-
-  document.getElementById("renameInput").addEventListener("keydown", (event) => {
+  document.getElementById("saveRename")?.addEventListener("click", saveFolderName);
+  document.getElementById("cancelRename")?.addEventListener("click", cancelRename);
+  document.getElementById("confirmDelete")?.addEventListener("click", confirmDelete);
+  document.getElementById("cancelDelete")?.addEventListener("click", cancelDelete);
+  document.getElementById("renameInput")?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") saveFolderName();
     if (event.key === "Escape") cancelRename();
   });
