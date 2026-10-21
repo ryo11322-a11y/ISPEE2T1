@@ -134,3 +134,13 @@ function addFolder() {
   // フォルダ命名
   openRenameModal(newFolder.id);
 }
+
+document.getElementById("saveRename").addEventListener("click", saveFolderName);
+document.getElementById("cancelRename").addEventListener("click", cancelRename);
+document.getElementById("confirmDelete").addEventListener("click", confirmDelete);
+document.getElementById("cancelDelete").addEventListener("click", cancelDelete);
+
+document.getElementById("renameInput").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") saveFolderName();
+  if (event.key === "Escape") cancelRename();
+});
