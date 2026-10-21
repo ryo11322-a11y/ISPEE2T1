@@ -1,9 +1,58 @@
-let folders = [];
+let folders = [
+  {
+    id: "sample-ooo",
+    name: "○○部",
+    count: 4,
+    children: [
+      { id: "sample-ooo-talk", name: "# 雑談", count: 12, children: [] },
+      { id: "sample-ooo-event", name: "# 行事", count: 7, children: [] },
+      { id: "sample-ooo-support", name: "# 業務連絡", count: 5, children: [] },
+      { id: "sample-ooo-attendance", name: "# 出欠", count: 3, children: [] }
+    ]
+  },
+  {
+    id: "sample-circle",
+    name: "サークル",
+    count: 3,
+    children: [
+      { id: "sample-circle-fitness", name: "# 体育会", count: 6, children: [] },
+      { id: "sample-circle-culture", name: "# 文化系", count: 2, children: [] },
+      { id: "sample-circle-other", name: "# その他", count: 1, children: [] }
+    ]
+  },
+  {
+    id: "sample-academic",
+    name: "学科関係",
+    count: 5,
+    children: [
+      { id: "sample-academic-lecture", name: "# 講義連絡", count: 4, children: [] },
+      { id: "sample-academic-zemi", name: "ゼミ", count: 3, children: [] },
+      { id: "sample-academic-lab", name: "研究室", count: 2, children: [] },
+      { id: "sample-academic-discussion", name: "# 学科の雑談", count: 8, children: [] },
+      { id: "sample-academic-other", name: "# その他", count: 1, children: [] }
+    ]
+  },
+  {
+    id: "sample-other",
+    name: "その他",
+    count: 2,
+    children: []
+  }
+];
+
 let selectedFolderId = null;
 let renamingFolderId = null;
 let deleteTargetId = null;
+const expandedFolderIds = new Set(["sample-ooo", "sample-circle", "sample-academic"]);
 
-// フォルダ管理
+function getFolderCount(item) {
+  if (!item || !item.children || !item.children.length) {
+    return Number(item?.count) || 0;
+  }
+
+  return Number(item.count || 0) + item.children.reduce((sum, child) => sum + getFolderCount(child), 0);
+}
+
 function findFolderById(folderId, items = folders) {
   for (const item of items) {
     if (item.id === folderId) return item;
@@ -27,10 +76,10 @@ function removeFolderById(folderId, items = folders) {
       if (removeFolderById(folderId, item.children)) return true;
     }
   }
+
   return false;
 }
 
-// モバイル環境用UI
 function openRenameModal(folderId) {
   const folder = findFolderById(folderId);
   if (!folder) return;
@@ -43,8 +92,15 @@ function openRenameModal(folderId) {
 
   input.value = folder.name || "";
   modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
 
   setTimeout(() => input.focus(), 50);
+}
+
+function closeRenameModal() {
+  const modal = document.getElementById("renameModal");
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
 }
 
 function saveFolderName() {
@@ -55,15 +111,10 @@ function saveFolderName() {
 
   const input = document.getElementById("renameInput");
   const rawValue = input.value.trim();
+  folder.name = rawValue || "Untitled";
 
-  let newName = rawValue || "Untitled";
-
-  if (!newName) newName = "Untitled";
-
-  folder.name = newName;
   renamingFolderId = null;
   closeRenameModal();
-
   renderFolderList();
 }
 
@@ -72,12 +123,6 @@ function cancelRename() {
   closeRenameModal();
 }
 
-function closeRenameModal() {
-  const modal = document.getElementById("renameModal");
-  modal.classList.remove("show");
-}
-
-// フォルダ削除フロー
 function openDeleteModal(folderId) {
   const folder = findFolderById(folderId);
   if (!folder) return;
@@ -90,6 +135,13 @@ function openDeleteModal(folderId) {
 
   label.textContent = folder.name || "Untitled";
   modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById("deleteModal");
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
 }
 
 function confirmDelete() {
@@ -100,7 +152,6 @@ function confirmDelete() {
 
   deleteTargetId = null;
   closeDeleteModal();
-
   renderFolderList();
 }
 
@@ -109,38 +160,153 @@ function cancelDelete() {
   closeDeleteModal();
 }
 
-function closeDeleteModal() {
-  const modal = document.getElementById("deleteModal");
-  modal.classList.remove("show");
-}
-
-// フォルダ作成フロー
 function addFolder() {
   const parentFolder = selectedFolderId ? findFolderById(selectedFolderId) : null;
   const newFolder = {
-    id: Date.now() + Math.random(),
+    id: `folder-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name: "Untitled",
+    count: 0,
     children: []
   };
 
   if (parentFolder) {
+    parentFolder.children = parentFolder.children || [];
     parentFolder.children.push(newFolder);
+    expandedFolderIds.add(parentFolder.id);
   } else {
     folders.push(newFolder);
   }
 
+  selectedFolderId = newFolder.id;
   renderFolderList();
-
-  // フォルダ命名
   openRenameModal(newFolder.id);
 }
 
-document.getElementById("saveRename").addEventListener("click", saveFolderName);
-document.getElementById("cancelRename").addEventListener("click", cancelRename);
-document.getElementById("confirmDelete").addEventListener("click", confirmDelete);
-document.getElementById("cancelDelete").addEventListener("click", cancelDelete);
+function renderFolderList() {
+  const folderList = document.getElementById("folderList");
+  if (!folderList) return;
 
-document.getElementById("renameInput").addEventListener("keydown", (event) => {
-  if (event.key === "Enter") saveFolderName();
-  if (event.key === "Escape") cancelRename();
+  const drawFolderTree = (items, depth = 0) => {
+    const fragment = document.createDocumentFragment();
+
+    items.forEach((item) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "folder-node";
+      wrapper.style.setProperty("--depth", depth);
+
+      const row = document.createElement("div");
+      row.className = "folder-row" + (selectedFolderId === item.id ? " active" : "");
+      row.dataset.folderId = item.id;
+
+      const toggleWrap = document.createElement("span");
+      toggleWrap.className = "folder-toggle-wrap";
+
+      if (item.children && item.children.length) {
+        const toggleButton = document.createElement("button");
+        toggleButton.type = "button";
+        toggleButton.className = "folder-toggle" + (expandedFolderIds.has(item.id) ? " open" : "");
+        toggleButton.setAttribute("aria-label", `${item.name} の展開状態を切り替え`);
+        toggleButton.textContent = "›";
+        toggleButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (expandedFolderIds.has(item.id)) {
+            expandedFolderIds.delete(item.id);
+          } else {
+            expandedFolderIds.add(item.id);
+          }
+          renderFolderList();
+        });
+        toggleWrap.appendChild(toggleButton);
+      } else {
+        const stub = document.createElement("span");
+        stub.className = "folder-toggle-placeholder";
+        stub.setAttribute("aria-hidden", "true");
+        toggleWrap.appendChild(stub);
+      }
+
+      const nameWrap = document.createElement("div");
+      nameWrap.className = "folder-name-wrap";
+
+      const icon = document.createElement("span");
+      icon.className = "folder-icon";
+      icon.textContent = "📁";
+
+      const label = document.createElement("span");
+      label.className = "folder-label";
+      label.textContent = item.name;
+
+      nameWrap.append(icon, label);
+
+      const count = document.createElement("span");
+      count.className = "folder-count";
+      count.textContent = String(getFolderCount(item));
+
+      const actions = document.createElement("div");
+      actions.className = "folder-actions";
+
+      const renameButton = document.createElement("button");
+      renameButton.type = "button";
+      renameButton.className = "mini-action rename-action";
+      renameButton.setAttribute("aria-label", `${item.name} を名前変更`);
+      renameButton.textContent = "✎";
+      renameButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openRenameModal(item.id);
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "mini-action delete-action";
+      deleteButton.setAttribute("aria-label", `${item.name} を削除`);
+      deleteButton.textContent = "🗑";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openDeleteModal(item.id);
+      });
+
+      actions.append(renameButton, deleteButton);
+
+      row.append(toggleWrap, nameWrap, count, actions);
+      row.addEventListener("click", (event) => {
+        if (event.target.closest("button")) return;
+        selectedFolderId = item.id;
+        renderFolderList();
+      });
+
+      wrapper.appendChild(row);
+
+      if (item.children && item.children.length && expandedFolderIds.has(item.id)) {
+        const childContainer = document.createElement("div");
+        childContainer.className = "folder-children";
+        childContainer.appendChild(drawFolderTree(item.children, depth + 1));
+        wrapper.appendChild(childContainer);
+      }
+
+      fragment.appendChild(wrapper);
+    });
+
+    return fragment;
+  };
+
+  folderList.innerHTML = "";
+  folderList.appendChild(drawFolderTree(folders));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const addFolderButton = document.getElementById("addFolderButton");
+  if (addFolderButton) {
+    addFolderButton.addEventListener("click", addFolder);
+  }
+
+  document.getElementById("saveRename").addEventListener("click", saveFolderName);
+  document.getElementById("cancelRename").addEventListener("click", cancelRename);
+  document.getElementById("confirmDelete").addEventListener("click", confirmDelete);
+  document.getElementById("cancelDelete").addEventListener("click", cancelDelete);
+
+  document.getElementById("renameInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") saveFolderName();
+    if (event.key === "Escape") cancelRename();
+  });
+
+  renderFolderList();
 });
