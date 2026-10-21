@@ -7,10 +7,69 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <main>
-            <h1>チャット管理アプリ</h1>
-        </main>
+        <div class="app">
+            <aside class="sidebar">
+                <h2>チャット</h2>
+                <h2>ファイル</h2>
+                <h2>お知らせ</h2>
+            </aside>
+
+            <main class="content">
+                <h1>チャット管理アプリ</h1>
+            </main>
+        </div>
 
         <script src="app.js" defer></script>
     </body>
 </html>
+<main class="content">
+    <h1>チャット管理アプリ</h1>
+
+    <section class="file-chat-panel">
+        <h2>ファイル</h2>
+
+        <div class="file-group">
+            <details open>
+                <summary>営業ファイル</summary>
+                <ul class="chat-list">
+                    <li><button type="button">チャットA</button></li>
+                    <li><button type="button">チャットB</button></li>
+                    <li><button type="button">チャットC</button></li>
+                </ul>
+            </details>
+
+            <details>
+                <summary>企画ファイル</summary>
+                <ul class="chat-list">
+                    <li><button type="button">チャットD</button></li>
+                    <li><button type="button">チャットE</button></li>
+                </ul>
+            </details>
+
+            <details>
+                <summary>共有ファイル</summary>
+                <ul class="chat-list">
+                    <li><button type="button">チャットF</button></li>
+                    <li><button type="button">チャットG</button></li>
+                </ul>
+            </details>
+        </div>
+    </section>
+</main>
+<section class="folder-manager">
+    <h2>フォルダ管理</h2>
+
+    <div class="folder-form">
+        <label for="folder-name">フォルダ名</label>
+        <input id="folder-name" type="text" placeholder="フォルダ名を入力" />
+
+        <label for="folder-action">操作</label>
+        <select id="folder-action">
+            <option value="add">追加</option>
+            <option value="delete">削除</option>
+        </select>
+
+        <button type="button" onclick="add-folder()">追加</button>
+        <button type="button" onclick="delete-folder()">削除</button>
+    </div>
+</section>
