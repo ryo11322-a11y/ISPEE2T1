@@ -134,7 +134,3 @@ function addFolder() {
   // フォルダ命名
   openRenameModal(newFolder.id);
 }
-    if (typeof renderFolderList === "function") {
-        renderFolderList();
-    }
-}
