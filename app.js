@@ -1,41 +1,44 @@
+const randomUnreadCount = () => {
+  const shouldHaveNotification = Math.random() < 0.55;
+  if (!shouldHaveNotification) return 0;
+  return Math.floor(Math.random() * 8) + 1;
+};
+
 let folders = [
   {
     id: "sample-ooo",
     name: "○○部",
-    count: 4,
     children: [
-      { id: "sample-ooo-talk", name: "雑談", count: 12, children: [] },
-      { id: "sample-ooo-event", name: "行事", count: 7, children: [] },
-      { id: "sample-ooo-support", name: "業務連絡", count: 5, children: [] },
-      { id: "sample-ooo-attendance", name: "出欠", count: 3, children: [] }
+      { id: "sample-ooo-talk", name: "# 雑談", unread: randomUnreadCount(), children: [] },
+      { id: "sample-ooo-event", name: "# 行事", unread: randomUnreadCount(), children: [] },
+      { id: "sample-ooo-support", name: "# 業務連絡", unread: randomUnreadCount(), children: [] },
+      { id: "sample-ooo-attendance", name: "# 出欠", unread: randomUnreadCount(), children: [] }
     ]
   },
   {
     id: "sample-circle",
     name: "サークル",
-    count: 3,
     children: [
-      { id: "sample-circle-fitness", name: "体育会", count: 6, children: [] },
-      { id: "sample-circle-culture", name: "文化系", count: 2, children: [] },
-      { id: "sample-circle-other", name: "その他", count: 1, children: [] }
+      { id: "sample-circle-fitness", name: "# 体育会", unread: randomUnreadCount(), children: [] },
+      { id: "sample-circle-culture", name: "# 文化系", unread: randomUnreadCount(), children: [] },
+      { id: "sample-circle-other", name: "# その他", unread: randomUnreadCount(), children: [] }
     ]
   },
   {
     id: "sample-academic",
     name: "学科関係",
-    count: 5,
     children: [
-      { id: "sample-academic-lecture", name: "講義連絡", count: 4, children: [] },
-      { id: "sample-academic-zemi", name: "ゼミ", count: 3, children: [] },
-      { id: "sample-academic-lab", name: "研究室", count: 2, children: [] },
-      { id: "sample-academic-discussion", name: "学科の雑談", count: 8, children: [] },
-      { id: "sample-academic-other", name: "その他", count: 1, children: [] }
+      { id: "sample-academic-lecture", name: "# 講義連絡", unread: randomUnreadCount(), children: [] },
+      { id: "sample-academic-zemi", name: "ゼミ", unread: randomUnreadCount(), children: [] },
+      { id: "sample-academic-lab", name: "研究室", unread: randomUnreadCount(), children: [] },
+      { id: "sample-academic-discussion", name: "# 学科の雑談", unread: randomUnreadCount(), children: [] },
+      { id: "sample-academic-other", name: "# その他", unread: randomUnreadCount(), children: [] }
     ]
   },
   {
     id: "sample-other",
     name: "その他",
-    count: 2,
+    unread: randomUnreadCount(),
     children: []
   }
 ];
@@ -46,11 +49,12 @@ let deleteTargetId = null;
 const expandedFolderIds = new Set(["sample-ooo", "sample-circle", "sample-academic"]);
 
 function getFolderCount(item) {
-  if (!item || !item.children || !item.children.length) {
-    return Number(item?.count) || 0;
+  if (!item) return 0;
+  if (!item.children || !item.children.length) {
+    return Number(item.unread || 0);
   }
 
-  return Number(item.count || 0) + item.children.reduce((sum, child) => sum + getFolderCount(child), 0);
+  return item.children.reduce((sum, child) => sum + getFolderCount(child), 0);
 }
 
 function findFolderById(folderId, items = folders) {
@@ -165,7 +169,7 @@ function addFolder() {
   const newFolder = {
     id: `folder-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name: "Untitled",
-    count: 0,
+    unread: 0,
     children: []
   };
 
@@ -180,6 +184,15 @@ function addFolder() {
   selectedFolderId = newFolder.id;
   renderFolderList();
   openRenameModal(newFolder.id);
+}
+
+function markChatAsRead(chatId) {
+  const item = findFolderById(chatId);
+  if (!item || (item.children && item.children.length)) return;
+
+  item.unread = 0;
+  selectedFolderId = chatId;
+  renderFolderList();
 }
 
 function renderFolderList() {
@@ -201,7 +214,9 @@ function renderFolderList() {
       const toggleWrap = document.createElement("span");
       toggleWrap.className = "folder-toggle-wrap";
 
-      if (item.children && item.children.length) {
+      const hasChildren = !!(item.children && item.children.length);
+
+      if (hasChildren) {
         const toggleButton = document.createElement("button");
         toggleButton.type = "button";
         toggleButton.className = "folder-toggle" + (expandedFolderIds.has(item.id) ? " open" : "");
@@ -229,7 +244,7 @@ function renderFolderList() {
 
       const icon = document.createElement("span");
       icon.className = "folder-icon";
-      icon.textContent = "📁";
+      icon.textContent = hasChildren ? "📁" : "💬";
 
       const label = document.createElement("span");
       label.className = "folder-label";
@@ -237,9 +252,14 @@ function renderFolderList() {
 
       nameWrap.append(icon, label);
 
+      const countValue = getFolderCount(item);
       const count = document.createElement("span");
       count.className = "folder-count";
-      count.textContent = String(getFolderCount(item));
+      if (countValue > 0) {
+        count.textContent = String(countValue);
+      } else {
+        count.classList.add("empty");
+      }
 
       const actions = document.createElement("div");
       actions.className = "folder-actions";
@@ -269,13 +289,19 @@ function renderFolderList() {
       row.append(toggleWrap, nameWrap, count, actions);
       row.addEventListener("click", (event) => {
         if (event.target.closest("button")) return;
-        selectedFolderId = item.id;
-        renderFolderList();
+
+        if (hasChildren) {
+          selectedFolderId = item.id;
+          renderFolderList();
+          return;
+        }
+
+        markChatAsRead(item.id);
       });
 
       wrapper.appendChild(row);
 
-      if (item.children && item.children.length && expandedFolderIds.has(item.id)) {
+      if (hasChildren && expandedFolderIds.has(item.id)) {
         const childContainer = document.createElement("div");
         childContainer.className = "folder-children";
         childContainer.appendChild(drawFolderTree(item.children, depth + 1));
