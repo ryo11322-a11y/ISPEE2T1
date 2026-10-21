@@ -56,20 +56,173 @@
         </div>
     </section>
 </main>
-<section class="folder-manager">
-    <h2>フォルダ管理</h2>
+<section class="utility-bar">
+    <div class="search-box">
+        <label for="chat-file-search">検索</label>
+        <input id="chat-file-search" type="search" placeholder="チャットやファイルを検索" />
+    </div>
 
-    <div class="folder-form">
-        <label for="folder-name">フォルダ名</label>
-        <input id="folder-name" type="text" placeholder="フォルダ名を入力" />
-
-        <label for="folder-action">操作</label>
-        <select id="folder-action">
-            <option value="add">追加</option>
-            <option value="delete">削除</option>
-        </select>
-
-        <button type="button" onclick="add-folder()">追加</button>
-        <button type="button" onclick="delete-folder()">削除</button>
+    <div class="folder-manage">
+        <label for="folder-search">ファイル検索・削除</label>
+        <input id="folder-search" type="search" placeholder="ファイル名を検索して追加・削除" />
+        <button type="button" id="add-folder">追加</button>
+        <button type="button" id="delete-folder">削除</button>
     </div>
 </section>
+
+<script>
+    function addFolder() {
+        const folderName = document.getElementById("folder-search").value.trim();
+
+        if (!folderName) {
+            alert("追加するファイル名を入力してください。");
+            return;
+        }
+
+        console.log("add-folder:", folderName);
+        alert(`${folderName} を追加しました。`);
+    }
+
+    function deleteFolder() {
+        const folderName = document.getElementById("folder-search").value.trim();
+
+        if (!folderName) {
+            alert("削除するファイル名を入力してください。");
+            return;
+        }
+
+        console.log("delete-folder:", folderName);
+        alert(`${folderName} を削除しました。`);
+    }
+
+    document.getElementById("add-folder").addEventListener("click", addFolder);
+    document.getElementById("delete-folder").addEventListener("click", deleteFolder);
+</script>
+<script>
+    (() => {
+        const utilityBar = document.querySelector(".utility-bar");
+        if (!utilityBar) return;
+
+        const pathPanel = document.createElement("div");
+        pathPanel.className = "current-path";
+        pathPanel.innerHTML = `
+            <span class="path-label">現在の場所</span>
+            <div id="current-open-path" class="current-open-path">
+                <span class="path-empty">未選択</span>
+            </div>
+        `;
+        utilityBar.appendChild(pathPanel);
+
+        const style = document.createElement("style");
+        style.textContent = `
+            .utility-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+            }
+
+            .utility-bar > .folder-manage {
+                flex: 1 1 auto;
+            }
+
+            .current-path {
+                flex: 1 1 280px;
+                min-width: 220px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+                color: #374151;
+                padding-left: 12px;
+                border-left: 1px solid #d1d5db;
+            }
+
+            .path-label {
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .current-open-path {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px;
+                min-height: 24px;
+            }
+
+            .path-item {
+                display: inline-block;
+                background: #e5e7eb;
+                color: #111827;
+                border-radius: 999px;
+                padding: 4px 8px;
+                line-height: 1.2;
+            }
+
+            .path-separator {
+                color: #6b7280;
+            }
+
+            .path-empty {
+                color: #6b7280;
+            }
+
+            .chat-list button.active {
+                background: #dbeafe;
+                border-color: #60a5fa;
+                color: #1d4ed8;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const details = document.querySelectorAll(".file-group details");
+        const chatButtons = document.querySelectorAll(".chat-list button");
+        const currentPath = document.getElementById("current-open-path");
+
+        function updateCurrentPath() {
+            const items = [];
+
+            details.forEach((detail) => {
+                if (detail.open) {
+                    const summary = detail.querySelector("summary");
+                    if (summary) {
+                        items.push(summary.textContent.trim());
+                    }
+                }
+            });
+
+            const activeChat = document.querySelector(".chat-list button.active");
+            if (activeChat) {
+                items.push(activeChat.textContent.trim());
+            }
+
+            if (!items.length) {
+                currentPath.innerHTML = '<span class="path-empty">未選択</span>';
+                return;
+            }
+
+            currentPath.innerHTML = items
+                .map((item, index) => {
+                    const separator = index === 0 ? "" : '<span class="path-separator">›</span>';
+                    return `${separator}<span class="path-item">${item}</span>`;
+                })
+                .join("");
+        }
+
+        details.forEach((detail) => {
+            detail.addEventListener("toggle", updateCurrentPath);
+        });
+
+        chatButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                chatButtons.forEach((btn) => {
+                    btn.classList.toggle("active", btn === button);
+                });
+                updateCurrentPath();
+            });
+        });
+
+        updateCurrentPath();
+    })();
+</script>
