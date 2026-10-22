@@ -3,49 +3,54 @@ const randomUnreadCount = () => {
   return shouldHaveNotification ? Math.floor(Math.random() * 9) + 1 : 0;
 };
 
+const createFolder = (id, name, children = []) => ({
+  id,
+  type: "folder",
+  name,
+  unread: 0,
+  children,
+});
+
+const createChat = (id, name, unread = 0) => ({
+  id,
+  type: "chat",
+  name,
+  unread,
+  children: [],
+});
+
 const folders = [
-  {
-    id: "sample-ooo",
-    name: "○○部",
-    children: [
-      { id: "sample-ooo-talk", name: "雑談", unread: 12, children: [] },
-      { id: "sample-ooo-event", name: "行事", unread: 7, children: [] },
-      { id: "sample-ooo-work", name: "業務連絡", unread: 5, children: [] },
-      { id: "sample-ooo-attendance", name: "出欠", unread: 3, children: [] }
-    ]
-  },
-  {
-    id: "sample-circle",
-    name: "サークル",
-    children: [
-      { id: "sample-circle-fitness", name: "体育会", unread: 6, children: [] },
-      { id: "sample-circle-culture", name: "文化系", unread: 2, children: [] },
-      { id: "sample-circle-other", name: "その他", unread: 1, children: [] }
-    ]
-  },
-  {
-    id: "sample-edu",
-    name: "学科関係",
-    children: [
-      { id: "sample-edu-lecture", name: "講義連絡", unread: 4, children: [] },
-      { id: "sample-edu-seminar", name: "ゼミ", unread: 3, children: [] },
-      { id: "sample-edu-lab", name: "研究室", unread: 2, children: [] },
-      { id: "sample-edu-chat", name: "学科の雑談", unread: 8, children: [] },
-      { id: "sample-edu-other", name: "その他", unread: 1, children: [] }
-    ]
-  },
-  {
-    id: "sample-other",
-    name: "その他",
-    unread: randomUnreadCount(),
-    children: []
-  }
+  createFolder("sample-ooo", "○○部", [
+    createChat("sample-ooo-talk", "雑談", 12),
+    createChat("sample-ooo-event", "行事", 7),
+    createChat("sample-ooo-work", "業務連絡", 5),
+    createChat("sample-ooo-attendance", "出欠", 3),
+  ]),
+  createFolder("sample-circle", "サークル", [
+    createChat("sample-circle-fitness", "体育会", 6),
+    createChat("sample-circle-culture", "文化系", 2),
+    createChat("sample-circle-other", "その他", 1),
+  ]),
+  createFolder("sample-edu", "学科関係", [
+    createChat("sample-edu-lecture", "講義連絡", 4),
+    createChat("sample-edu-seminar", "ゼミ", 3),
+    createChat("sample-edu-lab", "研究室", 2),
+    createChat("sample-edu-chat", "学科の雑談", 8),
+    createChat("sample-edu-other", "その他", 1),
+  ]),
+  createChat("sample-other", "その他", randomUnreadCount()),
 ];
 
 let selectedFolderId = null;
 let renamingFolderId = null;
 let deleteTargetId = null;
 const expandedFolderIds = new Set(["sample-ooo", "sample-circle", "sample-edu"]);
+let draggedNodeId = null;
+let holdTimer = null;
+
+function isFolder(node) {
+  return !!node && node.type === "folder";
+}
 
 function normalizeName(name) {
   const trimmed = (name || "").trim();
@@ -55,43 +60,128 @@ function normalizeName(name) {
 function getUnreadTotal(item) {
   if (!item) return 0;
 
-  if (!item.children || item.children.length === 0) {
+  if (!isFolder(item)) {
     return Number(item.unread || 0);
   }
 
   return item.children.reduce((sum, child) => sum + getUnreadTotal(child), 0);
 }
 
-function findFolderById(folderId, items = folders) {
+function findNodeById(nodeId, items = folders) {
   for (const item of items) {
-    if (item.id === folderId) return item;
-    if (item.children && item.children.length) {
-      const found = findFolderById(folderId, item.children);
+    if (item.id === nodeId) return item;
+    if (isFolder(item) && item.children && item.children.length) {
+      const found = findNodeById(nodeId, item.children);
       if (found) return found;
     }
   }
   return null;
 }
 
-function removeFolderById(folderId, items = folders) {
-  const index = items.findIndex((item) => item.id === folderId);
+function findParentFolder(nodeId, items = folders, parentFolder = null) {
+  for (const item of items) {
+    if (item.id === nodeId) return parentFolder;
+    if (isFolder(item) && item.children && item.children.length) {
+      const found = findParentFolder(nodeId, item.children, item);
+      if (found !== undefined) return found;
+    }
+  }
+  return null;
+}
+
+function findNodeContext(nodeId, items = folders) {
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index];
+
+    if (item.id === nodeId) {
+      return { item, parentArray: items, index };
+    }
+
+    if (isFolder(item) && item.children && item.children.length) {
+      const childContext = findNodeContext(nodeId, item.children);
+      if (childContext) {
+        return childContext;
+      }
+    }
+  }
+
+  return null;
+}
+
+function containsNodeId(folderId, targetId) {
+  const folder = findNodeById(folderId);
+  if (!folder || !isFolder(folder)) return false;
+
+  const walk = (items) => {
+    for (const item of items) {
+      if (item.id === targetId) return true;
+      if (isFolder(item) && walk(item.children)) return true;
+    }
+    return false;
+  };
+
+  return walk(folder.children || []);
+}
+
+function removeNodeById(nodeId, items = folders) {
+  const index = items.findIndex((item) => item.id === nodeId);
   if (index !== -1) {
     items.splice(index, 1);
     return true;
   }
 
   for (const item of items) {
-    if (item.children && item.children.length) {
-      if (removeFolderById(folderId, item.children)) return true;
+    if (isFolder(item) && item.children && item.children.length) {
+      if (removeNodeById(nodeId, item.children)) return true;
     }
   }
 
   return false;
 }
 
+function moveNodeToDestination(nodeId, targetFolderId = null) {
+  if (!nodeId || nodeId === targetFolderId) return;
+
+  const draggedNode = findNodeById(nodeId);
+  if (!draggedNode) return;
+
+  const sourceContext = findNodeContext(nodeId);
+  if (!sourceContext) return;
+
+  const targetFolder = targetFolderId ? findNodeById(targetFolderId) : null;
+
+  if (isFolder(draggedNode) && targetFolder && isFolder(targetFolder) && containsNodeId(draggedNode.id, targetFolder.id)) {
+    return;
+  }
+
+  sourceContext.parentArray.splice(sourceContext.index, 1);
+
+  if (targetFolder && isFolder(targetFolder)) {
+    targetFolder.children.push(draggedNode);
+    expandedFolderIds.add(targetFolder.id);
+    return;
+  }
+
+  const parentFolder = targetFolderId ? findParentFolder(targetFolderId) : null;
+  if (parentFolder) {
+    parentFolder.children.push(draggedNode);
+    expandedFolderIds.add(parentFolder.id);
+    return;
+  }
+
+  folders.push(draggedNode);
+}
+
+function clearHoldTimer() {
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+}
+
 function openRenameModal(folderId) {
-  const folder = findFolderById(folderId);
-  if (!folder) return;
+  const folder = findNodeById(folderId);
+  if (!folder || !isFolder(folder)) return;
 
   renamingFolderId = folderId;
   selectedFolderId = folderId;
@@ -116,8 +206,8 @@ function closeRenameModal() {
 function saveFolderName() {
   if (!renamingFolderId) return;
 
-  const folder = findFolderById(renamingFolderId);
-  if (!folder) return;
+  const folder = findNodeById(renamingFolderId);
+  if (!folder || !isFolder(folder)) return;
 
   const input = document.getElementById("renameInput");
   folder.name = normalizeName(input?.value || "");
@@ -133,8 +223,8 @@ function cancelRename() {
 }
 
 function openDeleteModal(folderId) {
-  const folder = findFolderById(folderId);
-  if (!folder) return;
+  const folder = findNodeById(folderId);
+  if (!folder || !isFolder(folder)) return;
 
   deleteTargetId = folderId;
   selectedFolderId = folderId;
@@ -158,7 +248,7 @@ function closeDeleteModal() {
 function confirmDelete() {
   if (!deleteTargetId) return;
 
-  removeFolderById(deleteTargetId);
+  removeNodeById(deleteTargetId);
   if (selectedFolderId === deleteTargetId) selectedFolderId = null;
 
   deleteTargetId = null;
@@ -172,20 +262,21 @@ function cancelDelete() {
 }
 
 function addFolder() {
-  const parentFolder = selectedFolderId ? findFolderById(selectedFolderId) : null;
-  const newFolder = {
-    id: `folder-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    name: "Untitled",
-    unread: 0,
-    children: []
-  };
+  const selectedNode = selectedFolderId ? findNodeById(selectedFolderId) : null;
+  const parentFolder = selectedNode && isFolder(selectedNode)
+    ? selectedNode
+    : findParentFolder(selectedFolderId || "");
 
+  const targetArray = parentFolder ? parentFolder.children : folders;
+  const newFolder = createFolder(
+    `folder-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    "Untitled",
+    []
+  );
+
+  targetArray.push(newFolder);
   if (parentFolder) {
-    parentFolder.children = parentFolder.children || [];
-    parentFolder.children.push(newFolder);
     expandedFolderIds.add(parentFolder.id);
-  } else {
-    folders.push(newFolder);
   }
 
   selectedFolderId = newFolder.id;
@@ -194,8 +285,8 @@ function addFolder() {
 }
 
 function markChatAsRead(chatId) {
-  const item = findFolderById(chatId);
-  if (!item || (item.children && item.children.length)) return;
+  const item = findNodeById(chatId);
+  if (!item || isFolder(item)) return;
 
   item.unread = 0;
   selectedFolderId = chatId;
@@ -210,23 +301,26 @@ function renderFolderList() {
     const fragment = document.createDocumentFragment();
 
     items.forEach((item) => {
-      const hasChildren = !!(item.children && item.children.length);
+      const isItemFolder = isFolder(item);
+      const hasChildren = isItemFolder && item.children && item.children.length > 0;
       const unreadTotal = getUnreadTotal(item);
 
       const wrapper = document.createElement("div");
       wrapper.className = "folder-node";
 
       const row = document.createElement("div");
-      row.className = "folder-row" + (selectedFolderId === item.id ? " active" : "");
-      row.dataset.folderId = item.id;
+      row.className = `folder-row${selectedFolderId === item.id ? " active" : ""}${isItemFolder ? " folder-row--folder" : " folder-row--chat"}`;
+      row.dataset.nodeId = item.id;
+      row.dataset.nodeType = item.type;
+      row.draggable = true;
 
       const toggleWrap = document.createElement("span");
       toggleWrap.className = "folder-toggle-wrap";
 
-      if (hasChildren) {
+      if (isItemFolder) {
         const toggle = document.createElement("button");
         toggle.type = "button";
-        toggle.className = "folder-toggle" + (expandedFolderIds.has(item.id) ? " open" : "");
+        toggle.className = `folder-toggle${expandedFolderIds.has(item.id) ? " open" : ""}`;
         toggle.textContent = "›";
         toggle.setAttribute("aria-label", `${item.name} の展開状態を切り替え`);
         toggle.addEventListener("click", (event) => {
@@ -248,7 +342,7 @@ function renderFolderList() {
 
       const icon = document.createElement("span");
       icon.className = "folder-icon";
-      icon.textContent = hasChildren ? "📁" : "#";
+      icon.textContent = isItemFolder ? "📁" : "#";
 
       const label = document.createElement("span");
       label.className = "folder-label";
@@ -257,51 +351,101 @@ function renderFolderList() {
       nameWrap.append(icon, label);
 
       const count = document.createElement("span");
-      count.className = "folder-count" + (unreadTotal > 0 ? "" : " empty");
+      count.className = `folder-count${unreadTotal > 0 ? "" : " empty"}`;
       count.textContent = unreadTotal > 0 ? String(unreadTotal) : "";
 
       const actions = document.createElement("div");
       actions.className = "folder-actions";
 
-      const renameBtn = document.createElement("button");
-      renameBtn.type = "button";
-      renameBtn.className = "mini-action";
-      renameBtn.textContent = "✎";
-      renameBtn.setAttribute("aria-label", `${item.name} を名前変更`);
-      renameBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        openRenameModal(item.id);
-      });
+      if (isItemFolder) {
+        const renameBtn = document.createElement("button");
+        renameBtn.type = "button";
+        renameBtn.className = "mini-action";
+        renameBtn.textContent = "✎";
+        renameBtn.setAttribute("aria-label", `${item.name} を名前変更`);
+        renameBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openRenameModal(item.id);
+        });
 
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "mini-action";
-      deleteBtn.textContent = "🗑";
-      deleteBtn.setAttribute("aria-label", `${item.name} を削除`);
-      deleteBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        openDeleteModal(item.id);
-      });
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "mini-action";
+        deleteBtn.textContent = "🗑";
+        deleteBtn.setAttribute("aria-label", `${item.name} を削除`);
+        deleteBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openDeleteModal(item.id);
+        });
 
-      actions.append(renameBtn, deleteBtn);
+        actions.append(renameBtn, deleteBtn);
+      }
 
       row.append(toggleWrap, nameWrap, count, actions);
       row.addEventListener("click", (event) => {
         if (event.target.closest("button")) return;
 
-        if (hasChildren) {
+        if (isItemFolder && hasChildren) {
           selectedFolderId = item.id;
           renderFolderList();
           return;
         }
 
         selectedFolderId = item.id;
-        markChatAsRead(item.id);
+        if (!isItemFolder) markChatAsRead(item.id);
+      });
+
+      row.addEventListener("pointerdown", (event) => {
+        if (event.target.closest("button")) return;
+        clearHoldTimer();
+        holdTimer = setTimeout(() => {
+          draggedNodeId = item.id;
+          row.classList.add("drag-source");
+          row.setAttribute("aria-grabbed", "true");
+        }, 220);
+      });
+
+      row.addEventListener("pointerup", clearHoldTimer);
+      row.addEventListener("pointerleave", clearHoldTimer);
+      row.addEventListener("pointercancel", clearHoldTimer);
+
+      row.addEventListener("dragstart", (event) => {
+        draggedNodeId = item.id;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", item.id);
+        row.classList.add("drag-source");
+      });
+
+      row.addEventListener("dragover", (event) => {
+        if (!draggedNodeId || draggedNodeId === item.id) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        row.classList.add("drop-target");
+      });
+
+      row.addEventListener("dragleave", () => {
+        row.classList.remove("drop-target");
+      });
+
+      row.addEventListener("drop", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        row.classList.remove("drop-target");
+        moveNodeToDestination(draggedNodeId, item.id);
+        draggedNodeId = null;
+        clearHoldTimer();
+        renderFolderList();
+      });
+
+      row.addEventListener("dragend", () => {
+        row.classList.remove("drag-source", "drop-target");
+        draggedNodeId = null;
+        clearHoldTimer();
       });
 
       wrapper.appendChild(row);
 
-      if (hasChildren && expandedFolderIds.has(item.id)) {
+      if (isItemFolder && hasChildren && expandedFolderIds.has(item.id)) {
         const childrenContainer = document.createElement("div");
         childrenContainer.className = "folder-children";
         childrenContainer.appendChild(drawTree(item.children));
@@ -330,6 +474,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.key === "Enter") saveFolderName();
     if (event.key === "Escape") cancelRename();
   });
+
+  const folderList = document.getElementById("folderList");
+  if (folderList) {
+    folderList.addEventListener("dragover", (event) => {
+      if (!draggedNodeId) return;
+      event.preventDefault();
+      folderList.classList.add("drop-root");
+    });
+
+    folderList.addEventListener("dragleave", () => {
+      folderList.classList.remove("drop-root");
+    });
+
+    folderList.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      folderList.classList.remove("drop-root");
+      moveNodeToDestination(draggedNodeId, null);
+      draggedNodeId = null;
+      clearHoldTimer();
+      renderFolderList();
+    });
+  }
 
   renderFolderList();
 });
