@@ -1,8 +1,3 @@
-const randomUnreadCount = () => {
-  const shouldHaveNotification = Math.random() < 0.6;
-  return shouldHaveNotification ? Math.floor(Math.random() * 9) + 1 : 0;
-};
-
 const createFolder = (id, name, children = []) => ({
   id,
   type: "folder",
@@ -21,24 +16,23 @@ const createChat = (id, name, unread = 0) => ({
 
 const folders = [
   createFolder("sample-ooo", "○○部", [
-    createChat("sample-ooo-talk", "雑談", 12),
-    createChat("sample-ooo-event", "行事", 7),
-    createChat("sample-ooo-work", "業務連絡", 5),
-    createChat("sample-ooo-attendance", "出欠", 3),
+    createChat("sample-ooo-talk", "雑談", 0),
+    createChat("sample-ooo-event", "行事", 0),
+    createChat("sample-ooo-work", "業務連絡", 0),
+    createChat("sample-ooo-attendance", "出欠", 0),
   ]),
   createFolder("sample-circle", "サークル", [
-    createChat("sample-circle-fitness", "体育会", 6),
-    createChat("sample-circle-culture", "文化系", 2),
-    createChat("sample-circle-other", "その他", 1),
+    createChat("sample-circle-fitness", "体育会", 0),
+    createChat("sample-circle-culture", "文化系", 0),
+    createChat("sample-circle-other", "その他", 0),
   ]),
   createFolder("sample-edu", "学科関係", [
-    createChat("sample-edu-lecture", "講義連絡", 4),
-    createChat("sample-edu-seminar", "ゼミ", 3),
-    createChat("sample-edu-lab", "研究室", 2),
-    createChat("sample-edu-chat", "学科の雑談", 8),
-    createChat("sample-edu-other", "その他", 1),
+    createChat("sample-edu-lecture", "講義連絡", 0),
+    createChat("sample-edu-seminar", "ゼミ", 0),
+    createChat("sample-edu-lab", "研究室", 0),
+    createChat("sample-edu-chat", "学科の雑談", 0),
+    createChat("sample-edu-other", "その他", 0),
   ]),
-  createChat("sample-other", "その他", randomUnreadCount()),
 ];
 
 let selectedFolderId = null;
@@ -55,6 +49,41 @@ function isFolder(node) {
 function normalizeName(name) {
   const trimmed = (name || "").trim();
   return trimmed === "" || trimmed.toLowerCase() === "untitled" ? "Untitled" : trimmed;
+}
+
+function getSelectedNode() {
+  if (!selectedFolderId) return null;
+  return findNodeById(selectedFolderId);
+}
+
+function updateContentPanel() {
+  const selectedNode = getSelectedNode();
+  const channelHeader = document.querySelector(".channel-header");
+  const messageList = document.querySelector(".message-list");
+  const composer = document.querySelector(".composer");
+  const emptyState = document.querySelector(".empty-state");
+  const isChatSelected = !!selectedNode && !isFolder(selectedNode);
+
+  if (channelHeader) channelHeader.hidden = !isChatSelected;
+  if (messageList) messageList.hidden = !isChatSelected;
+  if (composer) composer.hidden = !isChatSelected;
+  if (emptyState) emptyState.hidden = isChatSelected;
+
+  if (isChatSelected) {
+    const nameEl = document.querySelector(".channel-name");
+    if (nameEl) nameEl.textContent = normalizeName(selectedNode.name || "Untitled");
+    if (messageList) {
+      messageList.innerHTML = `
+        <div class="message-row">
+          <div class="avatar avatar-a">A</div>
+          <div class="message-bubble">
+            <div class="message-meta"><span class="sender">Aさん</span><span class="time">09:00</span></div>
+            <p>まだメッセージはありません。</p>
+          </div>
+        </div>
+      `;
+    }
+  }
 }
 
 function getUnreadTotal(item) {
@@ -162,13 +191,6 @@ function moveNodeToDestination(nodeId, targetFolderId = null) {
     return;
   }
 
-  const parentFolder = targetFolderId ? findParentFolder(targetFolderId) : null;
-  if (parentFolder) {
-    parentFolder.children.push(draggedNode);
-    expandedFolderIds.add(parentFolder.id);
-    return;
-  }
-
   folders.push(draggedNode);
 }
 
@@ -265,7 +287,7 @@ function addFolder() {
   const selectedNode = selectedFolderId ? findNodeById(selectedFolderId) : null;
   const parentFolder = selectedNode && isFolder(selectedNode)
     ? selectedNode
-    : findParentFolder(selectedFolderId || "");
+    : findParentFolder(selectedFolderId || "") || null;
 
   const targetArray = parentFolder ? parentFolder.children : folders;
   const newFolder = createFolder(
@@ -387,12 +409,14 @@ function renderFolderList() {
 
         if (isItemFolder && hasChildren) {
           selectedFolderId = item.id;
+          updateContentPanel();
           renderFolderList();
           return;
         }
 
         selectedFolderId = item.id;
         if (!isItemFolder) markChatAsRead(item.id);
+        updateContentPanel();
       });
 
       row.addEventListener("pointerdown", (event) => {
@@ -460,6 +484,7 @@ function renderFolderList() {
 
   folderList.innerHTML = "";
   folderList.appendChild(drawTree(folders));
+  updateContentPanel();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -498,5 +523,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  updateContentPanel();
   renderFolderList();
 });
