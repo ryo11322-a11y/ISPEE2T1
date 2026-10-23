@@ -78,6 +78,13 @@ function getSelectedNode() {
   return findNodeById(selectedFolderId);
 }
 
+function markChatAsRead(chatId) {
+  const chat = findNodeById(chatId);
+  if (chat && !isFolder(chat)) {
+    chat.unread = 0;
+  }
+}
+
 function updateContentPanel() {
   const selectedNode = getSelectedNode();
   const channelHeader = document.querySelector(".channel-header");
@@ -437,7 +444,10 @@ function renderFolderList() {
         }
 
         if (!isItemFolder) {
+          selectedFolderId = item.id;
           markChatAsRead(item.id);
+          updateContentPanel();
+          renderFolderList();
           if (isMobileLayout()) {
             openChatOnMobile();
           }
@@ -545,14 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.key === "Enter") saveFolderName();
     if (event.key === "Escape") cancelRename();
   });
-  document.addEventListener("DOMContentLoaded", () => {
-  selectedFolderId = null;
-  renamingFolderId = null;
-  deleteTargetId = null;
-  setMobileView("files");
-  updateContentPanel();
-  renderFolderList();
-});
 
   const folderList = document.getElementById("folderList");
   if (folderList) {
@@ -592,6 +594,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  selectedFolderId = null;
+  renamingFolderId = null;
+  deleteTargetId = null;
   setMobileView("files");
   updateContentPanel();
   renderFolderList();
