@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <div class="app-shell mobile-files-open">
       <aside class="sidebar" aria-label="フォルダ一覧">
         <div class="sidebar-header">
           <div class="brand-block">
@@ -29,37 +29,12 @@
             <span class="channel-name">雑談</span>
             <small>11人</small>
           </div>
-          <button class="channel-action" type="button" aria-label="メニュー">⋯</button>
+          <button class="channel-action" type="button" aria-label="ファイル一覧を表示">☰</button>
         </header>
 
-        <div class="message-list" aria-label="メッセージ一覧">
-          <div class="message-row">
-            <div class="avatar avatar-a">A</div>
-            <div class="message-bubble">
-              <div class="message-meta"><span class="sender">Aさん</span><span class="time">09:00</span></div>
-              <p>こんにちは！今日はどうでしたか？</p>
-            </div>
-          </div>
+        <div class="message-list" aria-label="メッセージ一覧"></div>
 
-          <div class="message-row message-self">
-            <div class="message-bubble">
-              <div class="message-meta"><span class="sender">自分</span><span class="time">09:02</span></div>
-              <p>資料の確認ができました。次のミーティングも進めます。</p>
-            </div>
-          </div>
-
-          <div class="message-row">
-            <div class="avatar avatar-b">B</div>
-            <div class="message-bubble">
-              <div class="message-meta"><span class="sender">Bさん</span><span class="time">09:04</span></div>
-              <p>了解です。共有資料は後で送ります。</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="composer" aria-label="メッセージ入力欄">
-          <span>メッセージを送信…</span>
-        </div>
+        <div class="composer" aria-label="メッセージ入力欄"></div>
 
         <div class="empty-state" aria-hidden="true">
           <div class="empty-icon">
@@ -68,7 +43,7 @@
             <span class="bubble-tail tail-left"></span>
             <span class="bubble-tail tail-right"></span>
           </div>
-          <p>左のファイルからチャットを選択してください</p>
+          <p></p>
         </div>
       </main>
     </div>

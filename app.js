@@ -16,7 +16,7 @@ const createChat = (id, name, unread = 0) => ({
 
 const folders = [
   createFolder("sample-ooo", "○○部", [
-    createChat("sample-ooo-talk", "雑談", 0),
+    createChat("sample-ooo-talk", "雑談", 1),
     createChat("sample-ooo-event", "行事", 0),
     createChat("sample-ooo-work", "業務連絡", 0),
     createChat("sample-ooo-attendance", "出欠", 0),
@@ -51,6 +51,28 @@ function normalizeName(name) {
   return trimmed === "" || trimmed.toLowerCase() === "untitled" ? "Untitled" : trimmed;
 }
 
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 720px)").matches;
+}
+
+function setMobileView(view) {
+  const appShell = document.querySelector(".app-shell");
+  if (!appShell) return;
+
+  appShell.classList.toggle("mobile-files-open", view === "files");
+  appShell.classList.toggle("mobile-chat-open", view === "chat");
+}
+
+function openFileListOnMobile() {
+  if (!isMobileLayout()) return;
+  setMobileView("files");
+}
+
+function openChatOnMobile() {
+  if (!isMobileLayout()) return;
+  setMobileView("chat");
+}
+
 function getSelectedNode() {
   if (!selectedFolderId) return null;
   return findNodeById(selectedFolderId);
@@ -78,7 +100,7 @@ function updateContentPanel() {
           <div class="avatar avatar-a">A</div>
           <div class="message-bubble">
             <div class="message-meta"><span class="sender">Aさん</span><span class="time">09:00</span></div>
-            <p>まだメッセージはありません。</p>
+            <p>テストメッセージ</p>
           </div>
         </div>
       `;
@@ -415,7 +437,12 @@ function renderFolderList() {
         }
 
         selectedFolderId = item.id;
-        if (!isItemFolder) markChatAsRead(item.id);
+        if (!isItemFolder) {
+          markChatAsRead(item.id);
+          if (isMobileLayout()) {
+            openChatOnMobile();
+          }
+        }
         updateContentPanel();
       });
 
@@ -491,6 +518,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const addButton = document.getElementById("addFolderButton");
   if (addButton) addButton.addEventListener("click", addFolder);
 
+  const channelActionButton = document.querySelector(".channel-action");
+  if (channelActionButton) {
+    channelActionButton.addEventListener("click", () => {
+      const appShell = document.querySelector(".app-shell");
+      if (!appShell) return;
+      const shouldOpenFiles = !appShell.classList.contains("mobile-files-open");
+      setMobileView(shouldOpenFiles ? "files" : "chat");
+    });
+  }
+
+  const channelBackButton = document.querySelector(".channel-back");
+  if (channelBackButton) {
+    channelBackButton.addEventListener("click", () => {
+      openFileListOnMobile();
+    });
+  }
+
   document.getElementById("saveRename")?.addEventListener("click", saveFolderName);
   document.getElementById("cancelRename")?.addEventListener("click", cancelRename);
   document.getElementById("confirmDelete")?.addEventListener("click", confirmDelete);
@@ -523,6 +567,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  window.addEventListener("resize", () => {
+    if (!isMobileLayout()) {
+      const appShell = document.querySelector(".app-shell");
+      if (appShell) {
+        appShell.classList.remove("mobile-files-open", "mobile-chat-open");
+      }
+      return;
+    }
+
+    const appShell = document.querySelector(".app-shell");
+    if (appShell && !appShell.classList.contains("mobile-files-open") && !appShell.classList.contains("mobile-chat-open")) {
+      setMobileView("files");
+    }
+  });
+
+  setMobileView("files");
   updateContentPanel();
   renderFolderList();
 });

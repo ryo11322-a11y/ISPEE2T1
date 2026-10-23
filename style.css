@@ -265,6 +265,136 @@ button {
   background: rgba(8, 18, 28, 0.48);
 }
 
+.channel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(9, 17, 26, 0.36);
+}
+
+.channel-back,
+.channel-action {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: rgba(140, 158, 176, 0.08);
+  color: var(--text);
+  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.channel-meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.channel-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.channel-meta small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.message-list {
+  height: calc(100vh - 170px);
+  overflow-y: auto;
+  padding: 18px 18px 12px;
+}
+
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.message-self {
+  justify-content: flex-end;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #eaf4ff;
+  background: rgba(112, 131, 160, 0.26);
+  flex-shrink: 0;
+}
+
+.avatar-a { background: rgba(116, 150, 206, 0.26); }
+.avatar-b { background: rgba(142, 191, 165, 0.22); }
+
+.message-bubble {
+  max-width: min(72%, 420px);
+  background: rgba(13, 26, 38, 0.72);
+  border: 1px solid rgba(167, 182, 199, 0.08);
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 12px;
+}
+
+.message-self .message-bubble {
+  background: rgba(129, 148, 172, 0.16);
+  border-radius: 14px 14px 4px 14px;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.sender {
+  color: rgba(224, 235, 247, 0.82);
+  font-weight: 600;
+}
+
+.time {
+  color: rgba(202, 214, 228, 0.7);
+}
+
+.message-bubble p {
+  margin: 0;
+  line-height: 1.6;
+  color: rgba(239, 246, 255, 0.9);
+  font-size: 14px;
+}
+
+.composer {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 14px;
+  background: rgba(9, 18, 27, 0.8);
+  color: rgba(208, 219, 233, 0.8);
+  border: 1px solid rgba(179, 194, 211, 0.08);
+}
+
 .empty-state {
   position: absolute;
   inset: 0;
@@ -421,31 +551,215 @@ button {
 }
 
 @media (max-width: 720px) {
+  body {
+    overflow: hidden;
+  }
+
   .app-shell {
-    flex-direction: column;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  .sidebar,
+  .content {
+    transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
   .sidebar {
+    position: absolute;
+    inset: 0 auto 0 0;
     width: 100%;
     min-width: 0;
-    min-height: 44vh;
+    min-height: 100%;
     border-right: none;
     border-bottom: 1px solid var(--line);
     padding: 12px 12px 8px;
-  }
-
-  .folder-list {
-    height: calc(44vh - 60px);
+    z-index: 10;
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .content {
-    min-height: 56vh;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-height: 100%;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .folder-list {
+    height: calc(100vh - 74px);
+  }
+
+  .app-shell.mobile-files-open .sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-shell.mobile-files-open .content {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .app-shell.mobile-chat-open .sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .app-shell.mobile-chat-open .content {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .channel-back {
+    display: none;
+  }
+
+  .channel-action {
+    display: inline-flex;
+  }
+
+  .message-bubble {
+    max-width: min(80%, 320px);
+  }
+
+  .message-list {
+    height: calc(100vh - 130px);
+    padding: 14px 14px 12px;
+  }
+
+  .composer {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .channel-header {
+    padding: 14px 14px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .message-list {
+    padding-bottom: 88px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .folder-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .header-button {
+    width: 26px;
+    height: 26px;
+    display: none;
+  }
+
+  .channel-action {
+    font-size: 20px;
+    font-weight: 700;
+    background: rgba(146, 167, 188, 0.12);
+    position: relative;
+    z-index: 2;
+  }
+
+  .empty-state {
+    padding-top: 90px;
+    display: flex;
+  }
+
+  .message-self .message-bubble {
+    max-width: min(78%, 320px);
+  }
+
+  .app-shell {
+    background: linear-gradient(180deg, #061826 0%, #081a2c 100%);
+  }
+
+  .sidebar {
+    background: rgba(10, 19, 29, 0.92);
+    box-shadow: 10px 0 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .message-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .folder-row {
+    min-height: 34px;
+    gap: 6px;
+    padding: 6px 8px 6px 6px;
+    border-radius: 8px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .message-row {
+    gap: 8px;
+  }
+
+  .message-bubble p {
+    font-size: 13px;
+  }
+
+  .content {
+    background: rgba(8, 18, 28, 0.52);
+  }
+
+  .folder-row.active {
+    background: rgba(141, 162, 184, 0.12);
+  }
+
+  .folder-row:active {
+    background: rgba(141, 162, 184, 0.14);
+  }
+
+  .folder-list::-webkit-scrollbar {
+    width: 0;
+  }
+
+  .message-list {
+    overscroll-behavior: contain;
+  }
+
+  .content[hidden] {
+    display: none;
+  }
+
+  .sidebar[hidden] {
+    display: none;
+  }
+
+  .message-list[hidden],
+  .composer[hidden],
+  .channel-header[hidden],
+  .empty-state[hidden] {
+    display: none !important;
+  }
+
+  .header-button.add-button {
+    display: inline-flex;
   }
 }
 
 @media (max-width: 420px) {
   .sidebar-header {
     padding-top: 4px;
+    padding-bottom: 8px;
   }
 
   .brand-name {
@@ -474,5 +788,15 @@ button {
   .primary-button,
   .danger-button {
     width: 100%;
+  }
+}
+
+@media (min-width: 721px) {
+  .channel-action {
+    display: inline-flex;
+  }
+
+  .channel-back {
+    display: inline-flex;
   }
 }
