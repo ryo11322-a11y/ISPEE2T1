@@ -93,6 +93,7 @@ function updateContentPanel() {
 
   if (isChatSelected) {
     const nameEl = document.querySelector(".channel-name");
+    selectedNode.unread = 0;
     if (nameEl) nameEl.textContent = normalizeName(selectedNode.name || "Untitled");
     if (messageList) {
       const testMessage = selectedNode.id === "sample-ooo-talk";
@@ -336,15 +337,6 @@ function addFolder() {
   openRenameModal(newFolder.id);
 }
 
-function markChatAsRead(chatId) {
-  const item = findNodeById(chatId);
-  if (!item || isFolder(item)) return;
-
-  item.unread = 0;
-  selectedFolderId = chatId;
-  renderFolderList();
-}
-
 function renderFolderList() {
   const folderList = document.getElementById("folderList");
   if (!folderList) return;
@@ -553,6 +545,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.key === "Enter") saveFolderName();
     if (event.key === "Escape") cancelRename();
   });
+  document.addEventListener("DOMContentLoaded", () => {
+  selectedFolderId = null;
+  renamingFolderId = null;
+  deleteTargetId = null;
+  setMobileView("files");
+  updateContentPanel();
+  renderFolderList();
+});
 
   const folderList = document.getElementById("folderList");
   if (folderList) {
