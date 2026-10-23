@@ -95,15 +95,18 @@ function updateContentPanel() {
     const nameEl = document.querySelector(".channel-name");
     if (nameEl) nameEl.textContent = normalizeName(selectedNode.name || "Untitled");
     if (messageList) {
-      messageList.innerHTML = `
-        <div class="message-row">
-          <div class="avatar avatar-a">A</div>
-          <div class="message-bubble">
-            <div class="message-meta"><span class="sender">Aさん</span><span class="time">09:00</span></div>
-            <p>テストメッセージ</p>
+      const shouldShowTestMessage = selectedNode.id === "sample-ooo-talk" && selectedNode.unread > 0;
+      messageList.innerHTML = shouldShowTestMessage
+        ? `
+          <div class="message-row">
+            <div class="avatar avatar-a">A</div>
+            <div class="message-bubble">
+              <div class="message-meta"><span class="sender">Aさん</span><span class="time">09:00</span></div>
+              <p>テストメッセージ</p>
+            </div>
           </div>
-        </div>
-      `;
+        `
+        : "";
     }
   }
 }
@@ -438,7 +441,6 @@ function renderFolderList() {
 
         selectedFolderId = item.id;
         if (!isItemFolder) {
-          markChatAsRead(item.id);
           if (isMobileLayout()) {
             openChatOnMobile();
           }
