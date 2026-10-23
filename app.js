@@ -439,12 +439,15 @@ function renderFolderList() {
           return;
         }
 
-        selectedFolderId = item.id;
         if (!isItemFolder) {
+          markChatAsRead(item.id);
           if (isMobileLayout()) {
             openChatOnMobile();
           }
+          return;
         }
+
+        selectedFolderId = item.id;
         updateContentPanel();
       });
 
